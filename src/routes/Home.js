@@ -1,36 +1,47 @@
 import React, { useEffect, useState } from "react";
 import {db} from '../firebase';
-import { collection, addDoc, serverTimestamp, getDocs, query, onSnapshot, orderBy } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, getDocs, onSnapshot, query, orderBy } from "firebase/firestore"; 
+import { getStorage, ref, uploadString } from "firebase/storage";
+import { v4 as uuidv4 } from 'uuid';
 import Post from "../components/Post";
 
-const Home = ({userObj})=> {
+const Home = ({userObj}) => {
+  const storage = getStorage();
+  const storageRef = ref(storage);
+
   console.log(userObj);
   const[post, setPost] = useState('');
-  const[posts, setPosts] = useState([]);
+  const[posts, setPosts] = useState([]); 
+  const[attachment, setAttachment] = useState();
 
-  const onChange = (e) => {
-
-    // let value = e.target.value(아래 문장과 같은말)
+  const onChange = (e) =>{
+    //let value = e.target.value
     const {target:{value}} = e;
     setPost(value);
   }
-
-
-  // await 함수는 바로 못쓰기 때문에 async를 추가해줌
-  const onSubmit = async (e) => {
+  const onSubmit = async (e) =>{
     e.preventDefault();
+    const fileRef = ref(storage, `${userObj}/${uuidv4()}`);
+
+    // Data URL string
+    const message4 = 'data:text/plain;base64,5b6p5Y+344GX44G+44GX44Gf77yB44GK44KB44Gn44Go44GG77yB';
+    uploadString(fileRef, attachment, 'data_url').then((snapshot) => {
+      console.log('파일 업로드 완료');
+    });
+    /*
     try {
       const docRef = await addDoc(collection(db, "posts"), {
-        // title: post,
         content:post,
-        date: serverTimestamp(),
+        date:serverTimestamp(),
         uid:userObj
       });
-      setPost(''); //비우기
+      setPost('');
       console.log("Document written with ID: ", docRef.id);
     } catch (e) {
       console.error("Error adding document: ", e);
     }
+    */
+
   }
 
   /*
@@ -50,25 +61,57 @@ const Home = ({userObj})=> {
   */
 
   useEffect(()=>{
-    const q = query(collection(db, "posts"),orderBy('date', 'desc'));
-    onSnapshot(q, (querySnapshot) => {
-      console.log(querySnapshot);
+    const q = query(collection(db, "posts"),orderBy('date','desc'));
+    onSnapshot(q, (querySnapshot) => {  
       const postArr = querySnapshot.docs.map(doc=>({
         id:doc.id,
         ...doc.data()
-      }));
+      }));      
       setPosts(postArr);
     });
-    // getPosts();
-  }, []);
-  
+
+    //getPosts();
+  },[]);
+
+  const onFileChange = (e) =>{
+    //console.log(e.target.files);
+    const {target:{files}} = e;
+    const theFile = files[0];
+    //console.log(theFile);
+    const reader = new FileReader();
+    reader.onloadend = (e) =>{
+      console.log(e.target.result);
+      const {target:{result}} = e;
+      setAttachment(result);
+    }
+    reader.readAsDataURL(theFile);
+  }
+  const onClearFile = ()=>{
+    setAttachment(null);
+    document.querySelector('#file').value='';
+  }
   return(
     <div>
       <form action="" onSubmit={onSubmit}>
-        <input type="text" value={post} placeholder="Write your twitt" onChange={onChange} />
-        <input type="submit" value="Add Post" />
+        <input type="text" value={post} placeholder="Write your twitt" onChange={onChange} required />
+        <input type="file" accept="image/*" onChange={onFileChange} id="file"/>
+        {
+        attachment && 
+        <>
+          <img src={attachment} width="50" alt=""/>        
+          <button type="button" onClick={onClearFile}>파일 업로드 취소</button>
+        </>
+        }
+        <p>
+          <input type="submit" value="Add Post"/>
+        </p>
       </form>
-      <ul>{ posts.map(list =><Post key={list.id} postObj={list} isOwener={list.uid === userObj} />) }</ul>
+      <hr/>
+      <ul>
+        {
+          posts.map(list =><Post key={list.id} postObj={list} isOwener={list.uid === userObj}/>)
+        }
+      </ul>
     </div>
   )
 }
