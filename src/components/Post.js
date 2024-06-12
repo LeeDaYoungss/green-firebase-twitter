@@ -45,17 +45,23 @@ const Post = ({postObj, isOwener})=>{
               <button onClick={toggleEditMode}>취소</button>
           </>
         ):(
-      <>
-        <h4>{postObj.content}</h4>
-        { //내가 쓴 글에만 수정, 삭제 버튼이 보이게
-          isOwener && (
-          <>
-          <button onClick={toggleEditMode}>수정</button>
-          <button onClick={deletePost}>삭제</button>
-          </>
-          )
-        }
-      </>
+        <>
+          <h4>{postObj.content}</h4>
+          { 
+            postObj.attachmentUrl !== '' && (
+              <img src="{postObj.attachmentUrl}" width="200" alt="" />
+              )
+          }
+          {
+            //내가 쓴 글에만 수정, 삭제 버튼이 보이게
+            isOwener && (
+            <>
+            <button onClick={toggleEditMode}>수정</button>
+            <button onClick={deletePost}>삭제</button>
+            </>
+            )
+          }
+        </>
         )
       }
     </li>
