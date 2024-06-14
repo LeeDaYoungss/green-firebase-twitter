@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {db} from '../firebase';
-import { collection, addDoc, serverTimestamp, getDocs, onSnapshot, query, orderBy } from "firebase/firestore"; 
+import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy } from "firebase/firestore"; 
 import { getStorage, ref, uploadString, getDownloadURL } from "firebase/storage";
 import { v4 as uuidv4 } from 'uuid';
 import Post from "../components/Post";

@@ -1,11 +1,14 @@
 import React, {useEffect, useState} from "react";
 import { getAuth, signOut, updateProfile } from "firebase/auth";
 import { useNavigate } from 'react-router-dom'
+import {db} from '../firebase';
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { collection, addDoc, serverTimestamp, getDocs, onSnapshot, query, orderBy } from "firebase/firestore"; 
+import { collection, onSnapshot, query, orderBy, where } from "firebase/firestore";
+import Post from "../components/Post";
 
 const Profile = ()=> {
   const[profileImg, setProfileImg] = useState(`${process.env.PUBLIC_URL}/profile_icon.svg`);
+  const[posts, setPosts] = useState([]); 
   const auth = getAuth();
   const navigate = useNavigate();
   console.log(auth);
@@ -35,6 +38,19 @@ const Profile = ()=> {
   useEffect(()=>{
     auth.currentUser.photoURL.includes('firebase') && setProfileImg(auth.currentUser.photoURL);
   },[]);
+
+  useEffect(()=>{
+    const q = query(collection(db, "posts"),where("uid", "==", auth.currentUser.uid),orderBy('date','desc'));
+    onSnapshot(q, (querySnapshot) => {  
+      const postArr = querySnapshot.docs.map(doc=>({
+        id:doc.id,
+        ...doc.data()
+      }));      
+      setPosts(postArr);
+    });
+
+    //getPosts();
+  },[]);
   return(
     <>
     <div className="profile">
@@ -45,7 +61,12 @@ const Profile = ()=> {
       <label htmlFor="profile">프로필 수정</label>
       <button onClick={logOut}>Logout</button>
       <hr />
-      <h4>My p ost</h4>
+      <h4>My post</h4>
+      <ul>
+        {
+          posts.map(list =><Post key={list.id} postObj={list} isOwener={list.uid === auth.currentUser.uid}/>)
+        }
+      </ul>
     </>
   )
 }
